@@ -364,132 +364,132 @@ class Chrome(selenium.webdriver.Chrome):
                     },
                 )
 
-            if self.options.mock_permissions:
-                logger.info("patch permissions api")
+                if self.options.mock_permissions:
+                    logger.info("patch permissions api")
 
-                self.execute_cdp_cmd(
-                    "Page.addScriptToEvaluateOnNewDocument",
-                    {
-                        "source": """
+                    self.execute_cdp_cmd(
+                        "Page.addScriptToEvaluateOnNewDocument",
+                        {
+                            "source": """
                                 // fix Notification permission in headless mode
                                 Object.defineProperty(Notification, 'permission', { get: () => "default"});
-                        """
-                    },
+                            """
+                        },
                 )
 
-            if self.options.emulate_touch:
-                logger.info("patch emulate touch")
+                if self.options.emulate_touch:
+                    logger.info("patch emulate touch")
 
-                self.execute_cdp_cmd(
-                    "Page.addScriptToEvaluateOnNewDocument",
-                    {
-                        "source": """
-                            Object.defineProperty(navigator, 'maxTouchPoints', {
-                                    get: () => 1
-                            })"""
-                    },
-                )
+                    self.execute_cdp_cmd(
+                        "Page.addScriptToEvaluateOnNewDocument",
+                        {
+                            "source": """
+                                Object.defineProperty(navigator, 'maxTouchPoints', {
+                                        get: () => 1
+                                })"""
+                        },
+                    )
 
-            if self.options.mock_canvas_fp:
-                logger.info("patch HTMLCanvasElement fingerprinting")
+                if self.options.mock_canvas_fp:
+                    logger.info("patch HTMLCanvasElement fingerprinting")
 
-                self.execute_cdp_cmd(
-                    "Page.addScriptToEvaluateOnNewDocument",
-                    {
-                        "source": """
-                        (function() {
-                            const ORIGINAL_CANVAS = HTMLCanvasElement.prototype[name];
-                            Object.defineProperty(HTMLCanvasElement.prototype, name, {
-                                    "value": function() {
-                                            var shift = {
-                                                    'r': Math.floor(Math.random() * 10) - 5,
-                                                    'g': Math.floor(Math.random() * 10) - 5,
-                                                    'b': Math.floor(Math.random() * 10) - 5,
-                                                    'a': Math.floor(Math.random() * 10) - 5
-                                            };
-                                            var width = this.width,
-                                                    height = this.height,
-                                                    context = this.getContext("2d");
-                                            var imageData = context.getImageData(0, 0, width, height);
-                                            for (var i = 0; i < height; i++) {
-                                                    for (var j = 0; j < width; j++) {
-                                                            var n = ((i * (width * 4)) + (j * 4));
-                                                            imageData.data[n + 0] = imageData.data[n + 0] + shift.r;
-                                                            imageData.data[n + 1] = imageData.data[n + 1] + shift.g;
-                                                            imageData.data[n + 2] = imageData.data[n + 2] + shift.b;
-                                                            imageData.data[n + 3] = imageData.data[n + 3] + shift.a;
+                    self.execute_cdp_cmd(
+                        "Page.addScriptToEvaluateOnNewDocument",
+                        {
+                            "source": """
+                            (function() {
+                                const ORIGINAL_CANVAS = HTMLCanvasElement.prototype[name];
+                                Object.defineProperty(HTMLCanvasElement.prototype, name, {
+                                        "value": function() {
+                                                var shift = {
+                                                        'r': Math.floor(Math.random() * 10) - 5,
+                                                        'g': Math.floor(Math.random() * 10) - 5,
+                                                        'b': Math.floor(Math.random() * 10) - 5,
+                                                        'a': Math.floor(Math.random() * 10) - 5
+                                                };
+                                                var width = this.width,
+                                                        height = this.height,
+                                                        context = this.getContext("2d");
+                                                var imageData = context.getImageData(0, 0, width, height);
+                                                for (var i = 0; i < height; i++) {
+                                                        for (var j = 0; j < width; j++) {
+                                                                var n = ((i * (width * 4)) + (j * 4));
+                                                                imageData.data[n + 0] = imageData.data[n + 0] + shift.r;
+                                                                imageData.data[n + 1] = imageData.data[n + 1] + shift.g;
+                                                                imageData.data[n + 2] = imageData.data[n + 2] + shift.b;
+                                                                imageData.data[n + 3] = imageData.data[n + 3] + shift.a;
+                                                        }
+                                                }
+                                                context.putImageData(imageData, 0, 0);
+                                                return ORIGINAL_CANVAS.apply(this, arguments);
+                                        }
+                                });
+                            })(this)
+                            """
+                        },
+                    )
+
+                if self.options.mock_chrome_global:
+                    self.execute_cdp_cmd(
+                        "Page.addScriptToEvaluateOnNewDocument",
+                        {
+                            "source": """
+
+                                Object.defineProperty(window, 'chrome', {
+                                    value: new Proxy(window.chrome, {
+                                            has: (target, key) => true,
+                                            get: (target, key) => {
+                                                    return {
+                                                            app: {
+                                                                    isInstalled: false,
+                                                            },
+                                                            webstore: {
+                                                                    onInstallStageChanged: {},
+                                                                    onDownloadProgress: {},
+                                                            },
+                                                            runtime: {
+                                                                    PlatformOs: {
+                                                                            MAC: 'mac',
+                                                                            WIN: 'win',
+                                                                            ANDROID: 'android',
+                                                                            CROS: 'cros',
+                                                                            LINUX: 'linux',
+                                                                            OPENBSD: 'openbsd',
+                                                                    },
+                                                                    PlatformArch: {
+                                                                            ARM: 'arm',
+                                                                            X86_32: 'x86-32',
+                                                                            X86_64: 'x86-64',
+                                                                    },
+                                                                    PlatformNaclArch: {
+                                                                            ARM: 'arm',
+                                                                            X86_32: 'x86-32',
+                                                                            X86_64: 'x86-64',
+                                                                    },
+                                                                    RequestUpdateCheckStatus: {
+                                                                            THROTTLED: 'throttled',
+                                                                            NO_UPDATE: 'no_update',
+                                                                            UPDATE_AVAILABLE: 'update_available',
+                                                                    },
+                                                                    OnInstalledReason: {
+                                                                            INSTALL: 'install',
+                                                                            UPDATE: 'update',
+                                                                            CHROME_UPDATE: 'chrome_update',
+                                                                            SHARED_MODULE_UPDATE: 'shared_module_update',
+                                                                    },
+                                                                    OnRestartRequiredReason: {
+                                                                            APP_UPDATE: 'app_update',
+                                                                            OS_UPDATE: 'os_update',
+                                                                            PERIODIC: 'periodic',
+                                                                    },
+                                                            },
                                                     }
                                             }
-                                            context.putImageData(imageData, 0, 0);
-                                            return ORIGINAL_CANVAS.apply(this, arguments);
-                                    }
-                            });
-                        })(this)
-                        """
-                    },
-                )
-
-            if self.options.mock_chrome_global:
-                self.execute_cdp_cmd(
-                    "Page.addScriptToEvaluateOnNewDocument",
-                    {
-                        "source": """
-                            
-                            Object.defineProperty(window, 'chrome', {
-                                value: new Proxy(window.chrome, {
-                                        has: (target, key) => true,
-                                        get: (target, key) => {
-                                                return {
-                                                        app: {
-                                                                isInstalled: false,
-                                                        },
-                                                        webstore: {
-                                                                onInstallStageChanged: {},
-                                                                onDownloadProgress: {},
-                                                        },
-                                                        runtime: {
-                                                                PlatformOs: {
-                                                                        MAC: 'mac',
-                                                                        WIN: 'win',
-                                                                        ANDROID: 'android',
-                                                                        CROS: 'cros',
-                                                                        LINUX: 'linux',
-                                                                        OPENBSD: 'openbsd',
-                                                                },
-                                                                PlatformArch: {
-                                                                        ARM: 'arm',
-                                                                        X86_32: 'x86-32',
-                                                                        X86_64: 'x86-64',
-                                                                },
-                                                                PlatformNaclArch: {
-                                                                        ARM: 'arm',
-                                                                        X86_32: 'x86-32',
-                                                                        X86_64: 'x86-64',
-                                                                },
-                                                                RequestUpdateCheckStatus: {
-                                                                        THROTTLED: 'throttled',
-                                                                        NO_UPDATE: 'no_update',
-                                                                        UPDATE_AVAILABLE: 'update_available',
-                                                                },
-                                                                OnInstalledReason: {
-                                                                        INSTALL: 'install',
-                                                                        UPDATE: 'update',
-                                                                        CHROME_UPDATE: 'chrome_update',
-                                                                        SHARED_MODULE_UPDATE: 'shared_module_update',
-                                                                },
-                                                                OnRestartRequiredReason: {
-                                                                        APP_UPDATE: 'app_update',
-                                                                        OS_UPDATE: 'os_update',
-                                                                        PERIODIC: 'periodic',
-                                                                },
-                                                        },
-                                                }
-                                        }
-                                })
-                            });
-                            """
-                    },
-                )
+                                    })
+                                });
+                                """
+                        },
+                    )
 
             return orig_get(*args, **kwargs)
 
