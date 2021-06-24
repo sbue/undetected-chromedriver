@@ -283,8 +283,7 @@ class Chrome(selenium.webdriver.Chrome):
             [options.binary_location, *options.arguments],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            close_fds=True,
+            stderr=subprocess.PIPE
         )
 
         super().__init__(
@@ -556,8 +555,6 @@ class Chrome(selenium.webdriver.Chrome):
         try:
             if self.reactor and isinstance(self.reactor, Reactor):
                 self.reactor.event.set()
-            super().quit()
-
         except Exception:  # noqa
             pass
         try:
@@ -569,22 +566,24 @@ class Chrome(selenium.webdriver.Chrome):
             logger.debug(e, exc_info=True)
         except Exception:  # noqa
             pass
-
-        if not self.keep_user_data_dir or self.keep_user_data_dir is False:
-            for _ in range(3):
-                try:
-                    logger.debug("removing profile : %s" % self.user_data_dir)
-                    shutil.rmtree(self.user_data_dir, ignore_errors=False)
-                except FileNotFoundError:
-                    pass
-                except PermissionError:
-                    logger.debug(
-                        "permission error. files are still in use/locked. retying..."
-                    )
-                else:
-                    break
-                time.sleep(1)
-
+        try:
+            if not self.keep_user_data_dir or self.keep_user_data_dir is False:
+                for _ in range(3):
+                    try:
+                        logger.debug("removing profile : %s" % self.user_data_dir)
+                        shutil.rmtree(self.user_data_dir, ignore_errors=False)
+                    except FileNotFoundError:
+                        pass
+                    except PermissionError:
+                        logger.debug(
+                            "permission error. files are still in use/locked. retying..."
+                        )
+                    else:
+                        break
+                    time.sleep(1)
+        finally:
+             super.quit()
+                
     def __del__(self):
         logger.debug("Chrome.__del__")
         self.quit()
