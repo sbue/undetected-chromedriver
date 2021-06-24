@@ -326,12 +326,12 @@ class Chrome(selenium.webdriver.Chrome):
 
         orig_get = self.get
 
-        logger.info("setting properties for headless")
+        logger.debug("setting properties for headless")
 
         def get_wrapped(*args, **kwargs):
 
             if self.execute_script("return navigator.webdriver"):
-                logger.info("patch navigator.webdriver")
+                logger.debug("patch navigator.webdriver")
                 self.execute_cdp_cmd(
                     "Page.addScriptToEvaluateOnNewDocument",
                     {
@@ -353,7 +353,7 @@ class Chrome(selenium.webdriver.Chrome):
                     },
                 )
 
-                logger.info("patch user-agent string")
+                logger.debug("patch user-agent string")
                 self.execute_cdp_cmd(
                     "Network.setUserAgentOverride",
                     {
@@ -364,7 +364,7 @@ class Chrome(selenium.webdriver.Chrome):
                 )
 
                 if self.options.mock_permissions:
-                    logger.info("patch permissions api")
+                    logger.debug("patch permissions api")
 
                     self.execute_cdp_cmd(
                         "Page.addScriptToEvaluateOnNewDocument",
@@ -377,7 +377,7 @@ class Chrome(selenium.webdriver.Chrome):
                 )
 
                 if self.options.emulate_touch:
-                    logger.info("patch emulate touch")
+                    logger.debug("patch emulate touch")
 
                     self.execute_cdp_cmd(
                         "Page.addScriptToEvaluateOnNewDocument",
@@ -390,7 +390,7 @@ class Chrome(selenium.webdriver.Chrome):
                     )
 
                 if self.options.mock_canvas_fp:
-                    logger.info("patch HTMLCanvasElement fingerprinting")
+                    logger.debug("patch HTMLCanvasElement fingerprinting")
 
                     self.execute_cdp_cmd(
                         "Page.addScriptToEvaluateOnNewDocument",
