@@ -583,7 +583,7 @@ class Chrome(selenium.webdriver.Chrome):
                         break
                     time.sleep(1)
         finally:
-             super.quit()
+             super().quit()
                 
     def __del__(self):
         logger.debug("Chrome.__del__")
