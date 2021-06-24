@@ -15,7 +15,7 @@ class ChromeOptions(_ChromeOptions):
     emulate_touch = True
     mock_permissions = True
     mock_chrome_global = False
-    mock_canvas_fp = True
+    mock_canvas_fp = False
     _user_data_dir = None
 
     def __init__(self):
