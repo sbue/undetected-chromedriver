@@ -283,7 +283,8 @@ class Chrome(selenium.webdriver.Chrome):
             [options.binary_location, *options.arguments],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            close_fds=True,
         )
 
         super().__init__(
@@ -326,12 +327,12 @@ class Chrome(selenium.webdriver.Chrome):
 
         orig_get = self.get
 
-        logger.debug("setting properties for headless")
+        logger.info("setting properties for headless")
 
         def get_wrapped(*args, **kwargs):
 
             if self.execute_script("return navigator.webdriver"):
-                logger.debug("patch navigator.webdriver")
+                logger.info("patch navigator.webdriver")
                 self.execute_cdp_cmd(
                     "Page.addScriptToEvaluateOnNewDocument",
                     {
@@ -353,7 +354,7 @@ class Chrome(selenium.webdriver.Chrome):
                     },
                 )
 
-                logger.debug("patch user-agent string")
+                logger.info("patch user-agent string")
                 self.execute_cdp_cmd(
                     "Network.setUserAgentOverride",
                     {
@@ -364,20 +365,20 @@ class Chrome(selenium.webdriver.Chrome):
                 )
 
                 if self.options.mock_permissions:
-                    logger.debug("patch permissions api")
+                    logger.info("patch permissions api")
 
                     self.execute_cdp_cmd(
                         "Page.addScriptToEvaluateOnNewDocument",
                         {
                             "source": """
-                                // fix Notification permission in headless mode
-                                Object.defineProperty(Notification, 'permission', { get: () => "default"});
+                                    // fix Notification permission in headless mode
+                                    Object.defineProperty(Notification, 'permission', { get: () => "default"});
                             """
                         },
-                )
+                    )
 
                 if self.options.emulate_touch:
-                    logger.debug("patch emulate touch")
+                    logger.info("patch emulate touch")
 
                     self.execute_cdp_cmd(
                         "Page.addScriptToEvaluateOnNewDocument",
@@ -390,7 +391,7 @@ class Chrome(selenium.webdriver.Chrome):
                     )
 
                 if self.options.mock_canvas_fp:
-                    logger.debug("patch HTMLCanvasElement fingerprinting")
+                    logger.info("patch HTMLCanvasElement fingerprinting")
 
                     self.execute_cdp_cmd(
                         "Page.addScriptToEvaluateOnNewDocument",
@@ -556,12 +557,14 @@ class Chrome(selenium.webdriver.Chrome):
             if self.reactor and isinstance(self.reactor, Reactor):
                 self.reactor.event.set()
             super().quit()
+
         except Exception:  # noqa
             pass
         try:
             logger.debug("killing browser")
             self.browser.kill()
-            self.browser.wait(0)
+            self.browser.wait(1)
+
         except TimeoutError as e:
             logger.debug(e, exc_info=True)
         except Exception:  # noqa
@@ -573,16 +576,15 @@ class Chrome(selenium.webdriver.Chrome):
                     logger.debug("removing profile : %s" % self.user_data_dir)
                     shutil.rmtree(self.user_data_dir, ignore_errors=False)
                 except FileNotFoundError:
-                    break
+                    pass
                 except PermissionError:
                     logger.debug(
                         "permission error. files are still in use/locked. retying..."
                     )
-                    continue
                 else:
                     break
-    
-                
+                time.sleep(1)
+
     def __del__(self):
         logger.debug("Chrome.__del__")
         self.quit()
