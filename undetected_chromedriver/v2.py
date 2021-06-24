@@ -581,9 +581,15 @@ class Chrome(selenium.webdriver.Chrome):
                     logger.debug(
                         "permission error. files are still in use/locked. retying..."
                     )
+                    continue
+                except OSError as e:
+                    logger.debug(
+                        "OSError  %s" % e
+                    )
+                    continue
                 else:
                     break
-                time.sleep(1)
+                time.sleep(.25)
 
     def __del__(self):
         logger.debug("Chrome.__del__")
