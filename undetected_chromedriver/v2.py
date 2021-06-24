@@ -555,6 +555,7 @@ class Chrome(selenium.webdriver.Chrome):
         try:
             if self.reactor and isinstance(self.reactor, Reactor):
                 self.reactor.event.set()
+            self.stop()
         except Exception:  # noqa
             pass
         try:
